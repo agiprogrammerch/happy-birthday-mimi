@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A Letter for Mimi 💌</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Klee+One&family=Zen+Kaku+Gothic+New:wght@300;400&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blush: #f7c5cc;
+      --sakura: #f4a0b0;
+      --deep-rose: #c0405a;
+      --cream: #fdf6f0;
+      --parchment: #faf0e6;
+      --ink: #1a0a0f;
+      --ink-light: rgba(26,10,15,0.6);
+      --gold: #d4a853;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--cream);
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      min-height: 100vh;
+      cursor: none;
+    }
+
+    .cursor {
+      position: fixed; width: 10px; height: 10px;
+      background: var(--sakura); border-radius: 50%;
+      pointer-events: none; z-index: 9999;
+      transform: translate(-50%,-50%);
+      mix-blend-mode: multiply;
+    }
+
+    /* Falling petals */
+    #petalCanvas {
+      position: fixed; top:0; left:0;
+      width:100%; height:100%;
+      pointer-events:none; z-index:0;
+    }
+
+    /* Nav */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      padding: 1.2rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      z-index: 50;
+      background: linear-gradient(to bottom, rgba(253,246,240,0.95), transparent);
+      backdrop-filter: blur(4px);
+    }
+    .nav-back {
+      font-size: 0.8rem; letter-spacing: 0.25em;
+      color: var(--ink-light); text-decoration: none;
+      text-transform: uppercase; transition: color 0.2s;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .nav-back:hover { color: var(--deep-rose); }
+    .nav-title {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1rem;
+      color: var(--ink-light);
+    }
+    .nav-pages {
+      display: flex; gap: 1rem;
+    }
+    .nav-pages a {
+      font-size: 0.7rem; letter-spacing: 0.2em;
+      color: var(--ink-light); text-decoration: none;
+      text-transform: uppercase; transition: color 0.2s;
+    }
+    .nav-pages a:hover { color: var(--deep-rose); }
+
+    /* Page layout */
+    .page-wrapper {
+      position: relative; z-index: 1;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 7rem 2rem 5rem;
+    }
+
+    /* Letter paper */
+    .letter-paper {
+      background: var(--parchment);
+      border-radius: 2px;
+      padding: 4rem;
+      position: relative;
+      box-shadow:
+        0 2px 4px rgba(0,0,0,0.04),
+        0 8px 32px rgba(192,64,90,0.06),
+        0 0 0 1px rgba(192,64,90,0.08);
+    }
+
+    /* Paper fold lines */
+    .letter-paper::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      height: 100%;
+      width: 1px;
+      background: rgba(192,64,90,0.06);
+      pointer-events: none;
+    }
+    .letter-paper::after {
+      content: '';
+      position: absolute;
+      left: 0; top: 50%;
+      width: 100%;
+      height: 1px;
+      background: rgba(192,64,90,0.06);
+      pointer-events: none;
+    }
+
+    /* Decorative top seal */
+    .seal {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      position: relative;
+    }
+    .seal-circle {
+      display: inline-flex;
+      align-items: center; justify-content: center;
+      width: 68px; height: 68px;
+      border-radius: 50%;
+      border: 1.5px solid var(--sakura);
+      font-size: 1.8rem;
+      position: relative;
+      background: white;
+      box-shadow: 0 4px 20px rgba(244,160,176,0.2);
+    }
+    .seal-line {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: 120px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--blush), transparent);
+    }
+
+    .letter-date {
+      text-align: right;
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      color: var(--ink-light);
+      margin-bottom: 2rem;
+    }
+
+    .letter-salutation {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.8rem;
+      color: var(--deep-rose);
+      margin-bottom: 2rem;
+    }
+
+    .letter-body {
+      font-family: 'Lora', serif;
+      font-size: 1.05rem;
+      line-height: 1.95;
+      color: var(--ink);
+      opacity: 0.85;
+    }
+    .letter-body p { margin-bottom: 1.4rem; }
+    .letter-body p:last-child { margin-bottom: 0; }
+
+    .letter-highlight {
+      font-style: italic;
+      color: var(--deep-rose);
+      font-weight: 400;
+    }
+
+    .letter-closing {
+      margin-top: 2.5rem;
+      text-align: right;
+    }
+    .closing-text {
+      font-family: 'Lora', serif;
+      font-style: italic;
+      font-size: 1rem;
+      color: var(--ink-light);
+      margin-bottom: 0.5rem;
+    }
+    .closing-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      color: var(--deep-rose);
+    }
+
+    /* Envelope decoration at bottom */
+    .envelope-decoration {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(244,160,176,0.3);
+    }
+    .env-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--blush), transparent);
+    }
+    .env-icon { font-size: 1rem; opacity: 0.5; }
+
+    /* Animated entrance */
+    .letter-paper {
+      opacity: 0;
+      transform: translateY(30px);
+      animation: paperReveal 1.2s ease 0.3s forwards;
+    }
+    @keyframes paperReveal {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Page header */
+    .page-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .page-tag {
+      font-size: 0.7rem; letter-spacing: 0.4em;
+      color: var(--sakura); text-transform: uppercase;
+      margin-bottom: 0.8rem;
+    }
+    .page-heading {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      color: var(--ink);
+      line-height: 1.1;
+    }
+    .page-heading em { color: var(--deep-rose); }
+
+    /* Next button */
+    .next-btn {
+      display: block;
+      text-align: center;
+      margin-top: 3rem;
+      text-decoration: none;
+    }
+    .next-btn-inner {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.8rem 2rem;
+      border: 1px solid rgba(192,64,90,0.3);
+      border-radius: 50px;
+      font-size: 0.8rem;
+      letter-spacing: 0.2em;
+      color: var(--ink-light);
+      text-transform: uppercase;
+      transition: all 0.3s;
+    }
+    .next-btn:hover .next-btn-inner {
+      background: var(--sakura);
+      color: white;
+      border-color: var(--sakura);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(244,160,176,0.3);
+    }
+
+    @media (max-width: 600px) {
+      .letter-paper { padding: 2rem 1.5rem; }
+      .letter-salutation { font-size: 1.4rem; }
+      .letter-body { font-size: 0.95rem; }
+      nav .nav-pages { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="cursor" id="cursor"></div>
+<canvas id="petalCanvas"></canvas>
+
+<nav>
+  <a href="index.html" class="nav-back">← Home</a>
+  <span class="nav-title">A Letter for Mimi</span>
+  <div class="nav-pages">
+    <a href="memories.html">Memories</a>
+    <a href="wishes.html">Wishes</a>
+    <a href="promise.html">Promise</a>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <header class="page-header">
+    <p class="page-tag">From the heart</p>
+    <h1 class="page-heading">A little <em>letter</em><br>written for you</h1>
+  </header>
+
+  <div class="letter-paper">
+    <div class="seal">
+      <div class="seal-line"></div>
+      <div class="seal-circle">🌸</div>
+    </div>
+
+    <p class="letter-date">March 25, 2026 · Agra → Wherever You Are</p>
+
+    <p class="letter-salutation">Dear Mimi,</p>
+
+    <div class="letter-body">
+      <p>
+        Today the world is a little more beautiful because you exist in it.
+        I know that sounds like something off a greeting card — but I mean it, genuinely,
+        down to the last petal falling on this page.
+      </p>
+      <p>
+        I don't think you realize how much your warmth travels. Across time zones, across
+        languages, across all the distances that the internet pretends don't exist —
+        <span class="letter-highlight">you carry light with you</span>, and people around you
+        end up carrying some of it too.
+      </p>
+      <p>
+        I'm really glad we became friends. I'm glad we talk about Japan and all
+        the silly things that somehow matter. I'm glad that somewhere between conversations
+        about nothing and everything, we made a promise to go see the sakura together someday.
+      </p>
+      <p>
+        On your birthday, I want you to know:
+        <span class="letter-highlight">you are seen, you are cherished, and you deserve
+        every good thing this year is about to bring you.</span>
+      </p>
+      <p>
+        May you get the kind of year that feels like a really good book —
+        the kind you can't put down, full of surprising chapters and people who make the story
+        worth reading. And somewhere in that story, I hope there's a page with
+        cherry blossoms. Maybe even a real one.
+      </p>
+      <p>
+        Until then — happy birthday, Momo Akuta.<br>
+        今日はあなたの特別な日です。
+      </p>
+    </div>
+
+    <div class="letter-closing">
+      <p class="closing-text">With warmth from Agra,</p>
+      <p class="closing-name">Aru-Chan 🌸</p>
+    </div>
+
+    <div class="envelope-decoration">
+      <div class="env-line"></div>
+      <span class="env-icon">✦</span>
+      <div class="env-line"></div>
+    </div>
+  </div>
+
+  <a href="memories.html" class="next-btn">
+    <div class="next-btn-inner">
+      <span>Next — Our Memories</span>
+      <span>→</span>
+    </div>
+  </a>
+</div>
+
+<script>
+  // Cursor
+  const cursor = document.getElementById('cursor');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+  });
+
+  // Petals
+  const canvas = document.getElementById('petalCanvas');
+  const ctx = canvas.getContext('2d');
+  const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+  resize(); window.addEventListener('resize', resize);
+  const petals = Array.from({length: 20}, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    size: Math.random() * 6 + 3,
+    speed: Math.random() * 0.8 + 0.3,
+    drift: (Math.random()-0.5)*0.5,
+    rot: Math.random()*Math.PI*2,
+    rotSpeed: (Math.random()-0.5)*0.03,
+    color: ['#f4a0b0','#f7c5cc','#fce4ec'][Math.floor(Math.random()*3)],
+    opacity: Math.random()*0.25+0.1
+  }));
+  (function loop() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    petals.forEach(p => {
+      p.y += p.speed; p.x += p.drift; p.rot += p.rotSpeed;
+      if (p.y > canvas.height+10) { p.y = -10; p.x = Math.random()*canvas.width; }
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+      ctx.globalAlpha = p.opacity; ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.ellipse(0,0,p.size,p.size*0.5,0,0,Math.PI*2);
+      ctx.fill(); ctx.restore();
+    });
+    requestAnimationFrame(loop);
+  })();
+</script>
+</body>
+</html>

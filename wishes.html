@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Birthday Wishes for Mimi 🌟</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Klee+One&family=Zen+Kaku+Gothic+New:wght@300;400&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blush: #f7c5cc;
+      --sakura: #f4a0b0;
+      --deep-rose: #c0405a;
+      --cream: #fdf6f0;
+      --ink: #1a0a0f;
+      --ink-light: rgba(26,10,15,0.55);
+      --gold: #d4a853;
+      --soft-gold: rgba(212,168,83,0.15);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { background:var(--cream); font-family:'Zen Kaku Gothic New',sans-serif; min-height:100vh; cursor:none; }
+    .cursor { position:fixed; width:10px; height:10px; background:var(--sakura); border-radius:50%; pointer-events:none; z-index:9999; transform:translate(-50%,-50%); mix-blend-mode:multiply; }
+
+    #petalCanvas { position:fixed; top:0;left:0; width:100%;height:100%; pointer-events:none; z-index:0; }
+
+    nav {
+      position:fixed; top:0; left:0; right:0;
+      padding:1.2rem 2rem; display:flex; align-items:center; justify-content:space-between;
+      z-index:50; background:linear-gradient(to bottom,rgba(253,246,240,0.95),transparent); backdrop-filter:blur(4px);
+    }
+    .nav-back { font-size:0.8rem;letter-spacing:0.25em;color:var(--ink-light);text-decoration:none;text-transform:uppercase;transition:color 0.2s; }
+    .nav-back:hover { color:var(--deep-rose); }
+    .nav-title { font-family:'Playfair Display',serif;font-style:italic;font-size:1rem;color:var(--ink-light); }
+    .nav-pages { display:flex;gap:1rem; }
+    .nav-pages a { font-size:0.7rem;letter-spacing:0.2em;color:var(--ink-light);text-decoration:none;text-transform:uppercase;transition:color 0.2s; }
+    .nav-pages a:hover { color:var(--deep-rose); }
+
+    .page-wrapper { position:relative;z-index:1; max-width:1000px;margin:0 auto; padding:7rem 2rem 5rem; }
+
+    .page-header { text-align:center;margin-bottom:3.5rem; opacity:0; animation:fadeUp 1s ease 0.2s forwards; }
+    .page-tag { font-size:0.7rem;letter-spacing:0.4em;color:var(--sakura);text-transform:uppercase;margin-bottom:0.8rem; }
+    .page-heading { font-family:'Playfair Display',serif;font-size:clamp(2rem,5vw,3.5rem);color:var(--ink);line-height:1.1; }
+    .page-heading em { color:var(--deep-rose); }
+
+    /* HBD text with animation */
+    .hbd-display {
+      text-align:center;
+      margin-bottom:3rem;
+      overflow:hidden;
+    }
+    .hbd-display .hbd-letter {
+      font-family:'Playfair Display',serif;
+      font-size:clamp(4rem,12vw,9rem);
+      font-weight:700;
+      display:inline-block;
+      color:transparent;
+      -webkit-text-stroke:1px rgba(192,64,90,0.25);
+      opacity:0;
+      animation:letterDrop 0.6s ease forwards;
+    }
+    .hbd-display .hbd-letter.colored {
+      color:var(--deep-rose);
+      -webkit-text-stroke:0px;
+    }
+    .hbd-display .hbd-space { display:inline-block; width:1rem; }
+    .hbd-letter:nth-child(1) { animation-delay:0.1s; }
+    .hbd-letter:nth-child(2) { animation-delay:0.2s; }
+    .hbd-letter:nth-child(3) { animation-delay:0.3s; }
+    .hbd-letter:nth-child(5) { animation-delay:0.45s; }
+    .hbd-letter:nth-child(6) { animation-delay:0.55s; }
+    .hbd-letter:nth-child(7) { animation-delay:0.65s; }
+    .hbd-letter:nth-child(8) { animation-delay:0.75s; }
+    .hbd-letter:nth-child(9) { animation-delay:0.85s; }
+
+    /* Wishes grid */
+    .wishes-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(280px,1fr));
+      gap:1.5rem;
+      margin-bottom:3rem;
+    }
+    .wish-card {
+      background:white;
+      border-radius:2px;
+      padding:2rem;
+      position:relative;
+      overflow:hidden;
+      box-shadow:0 2px 20px rgba(192,64,90,0.05), 0 0 0 1px rgba(244,160,176,0.1);
+      opacity:0;
+      transform:translateY(24px);
+      transition:opacity 0.7s ease, transform 0.7s ease, box-shadow 0.3s ease;
+      cursor:pointer;
+    }
+    .wish-card.visible { opacity:1; transform:translateY(0); }
+    .wish-card:hover { box-shadow:0 8px 40px rgba(192,64,90,0.12); transform:translateY(-4px); }
+    .wish-card::after {
+      content:'';
+      position:absolute; inset:0;
+      background:radial-gradient(circle at 70% 20%, rgba(244,160,176,0.08), transparent 60%);
+      pointer-events:none;
+    }
+
+    .wish-num {
+      font-family:'Playfair Display',serif;
+      font-size:3rem; font-weight:700;
+      color:rgba(244,160,176,0.2);
+      line-height:1;
+      margin-bottom:0.5rem;
+    }
+    .wish-icon { font-size:1.5rem; margin-bottom:0.8rem; display:block; }
+    .wish-title { font-family:'Playfair Display',serif; font-size:1.15rem; color:var(--ink); margin-bottom:0.6rem; }
+    .wish-text { font-family:'Lora',serif; font-size:0.88rem; line-height:1.7; color:var(--ink-light); }
+
+    /* The big wish */
+    .big-wish {
+      background: linear-gradient(135deg, var(--ink) 0%, #3d1020 100%);
+      border-radius:2px;
+      padding:3.5rem;
+      text-align:center;
+      position:relative;
+      overflow:hidden;
+      margin-bottom:3rem;
+      opacity:0;
+      animation:fadeUp 1s ease 0.8s forwards;
+    }
+    .big-wish::before {
+      content:'';
+      position:absolute; inset:0;
+      background:radial-gradient(circle at 50% 0%, rgba(244,160,176,0.12), transparent 60%);
+    }
+    .big-wish-kanji {
+      font-family:'Klee One',cursive;
+      font-size:0.8rem; letter-spacing:0.4em;
+      color:rgba(244,160,176,0.5);
+      text-transform:uppercase;
+      margin-bottom:1.5rem;
+    }
+    .big-wish-text {
+      font-family:'Playfair Display',serif;
+      font-style:italic;
+      font-size:clamp(1.5rem,4vw,2.5rem);
+      color:var(--cream);
+      line-height:1.4;
+      position:relative;
+    }
+    .big-wish-text span { color:var(--sakura); }
+    .big-wish-sub {
+      margin-top:1.5rem;
+      font-size:0.85rem;
+      color:rgba(253,246,240,0.4);
+      letter-spacing:0.15em;
+      font-weight:300;
+      position:relative;
+    }
+
+    /* Confetti button */
+    .confetti-btn {
+      display:inline-block;
+      margin-top:2rem;
+      padding:0.8rem 2.2rem;
+      background:var(--sakura);
+      color:var(--ink);
+      border:none; border-radius:50px;
+      font-family:'Zen Kaku Gothic New',sans-serif;
+      font-size:0.85rem; letter-spacing:0.2em;
+      text-transform:uppercase;
+      cursor:pointer;
+      transition:transform 0.2s, box-shadow 0.2s;
+      position:relative;
+    }
+    .confetti-btn:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(244,160,176,0.4); }
+    .confetti-btn:active { transform:scale(0.97); }
+
+    /* Confetti canvas */
+    #confettiCanvas {
+      position:fixed; top:0;left:0;
+      width:100%;height:100%;
+      pointer-events:none; z-index:100;
+    }
+
+    .next-btn { display:block;text-align:center;margin-top:3rem;text-decoration:none; }
+    .next-btn-inner {
+      display:inline-flex;align-items:center;gap:0.7rem;
+      padding:0.8rem 2rem;border:1px solid rgba(192,64,90,0.3);
+      border-radius:50px;font-size:0.8rem;letter-spacing:0.2em;
+      color:var(--ink-light);text-transform:uppercase;transition:all 0.3s;
+    }
+    .next-btn:hover .next-btn-inner {
+      background:var(--sakura);color:white;border-color:var(--sakura);
+      transform:translateY(-2px);box-shadow:0 8px 24px rgba(244,160,176,0.3);
+    }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+    @keyframes letterDrop { from{opacity:0;transform:translateY(-40px) scale(1.2);} to{opacity:1;transform:translateY(0) scale(1);} }
+
+    @media(max-width:600px) {
+      .big-wish { padding:2rem; }
+      nav .nav-pages { display:none; }
+    }
+  </style>
+</head>
+<body>
+<div class="cursor" id="cursor"></div>
+<canvas id="petalCanvas"></canvas>
+<canvas id="confettiCanvas"></canvas>
+
+<nav>
+  <a href="index.html" class="nav-back">← Home</a>
+  <span class="nav-title">Birthday Wishes</span>
+  <div class="nav-pages">
+    <a href="letter.html">Letter</a>
+    <a href="memories.html">Memories</a>
+    <a href="promise.html">Promise</a>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <header class="page-header">
+    <p class="page-tag">With love, from Agra</p>
+    <h1 class="page-heading">Wishes for <em>Mimi</em></h1>
+  </header>
+
+  <!-- Animated HBD letters -->
+  <div class="hbd-display">
+    <span class="hbd-letter colored">H</span>
+    <span class="hbd-letter colored">B</span>
+    <span class="hbd-letter colored">D</span>
+    <span class="hbd-space"></span>
+    <span class="hbd-letter">M</span>
+    <span class="hbd-letter">I</span>
+    <span class="hbd-letter">M</span>
+    <span class="hbd-letter">I</span>
+    <span class="hbd-letter">🌸</span>
+  </div>
+
+  <!-- Wish cards -->
+  <div class="wishes-grid">
+    <div class="wish-card">
+      <div class="wish-num">01</div>
+      <span class="wish-icon">☀️</span>
+      <h3 class="wish-title">Days Full of Light</h3>
+      <p class="wish-text">May every morning this year greet you with something worth smiling about — small things, big things, surprise things.</p>
+    </div>
+    <div class="wish-card">
+      <div class="wish-num">02</div>
+      <span class="wish-icon">🌿</span>
+      <h3 class="wish-title">Growth in Quiet Ways</h3>
+      <p class="wish-text">I wish you the kind of growth that happens gently — not through struggle, but through discovery. New chapters that open smoothly.</p>
+    </div>
+    <div class="wish-card">
+      <div class="wish-num">03</div>
+      <span class="wish-icon">🍜</span>
+      <h3 class="wish-title">Really Good Food</h3>
+      <p class="wish-text">Genuinely. May you eat the best ramen of your life this year. (And then eat it again.) You deserve it.</p>
+    </div>
+    <div class="wish-card">
+      <div class="wish-num">04</div>
+      <span class="wish-icon">🎵</span>
+      <h3 class="wish-title">Moments That Feel Like Songs</h3>
+      <p class="wish-text">The kind of afternoon that feels like a specific song. The kind of memory you'll want to revisit. More of those.</p>
+    </div>
+    <div class="wish-card">
+      <div class="wish-num">05</div>
+      <span class="wish-icon">🌙</span>
+      <h3 class="wish-title">Rest That Actually Restores</h3>
+      <p class="wish-text">Not just sleep — actual rest. Peace. The feeling of having nothing urgent to carry for a while. You deserve to set things down.</p>
+    </div>
+    <div class="wish-card">
+      <div class="wish-num">06</div>
+      <span class="wish-icon">🗺️</span>
+      <h3 class="wish-title">Adventures Near and Far</h3>
+      <p class="wish-text">May this year take you somewhere unexpected. A new place, a new idea, a new version of yourself you hadn't met yet.</p>
+    </div>
+  </div>
+
+  <!-- Big wish -->
+  <div class="big-wish">
+    <p class="big-wish-kanji">心からの願い · Kokoro kara no negai</p>
+    <p class="big-wish-text">
+      May you always know<br>
+      <span>how wonderful you are</span><br>
+      to the people who know you.
+    </p>
+    <p class="big-wish-sub">March 25 · Happy Birthday, Momo Akuta</p>
+    <button class="confetti-btn" id="confettiBtn">🎉 Celebrate!</button>
+  </div>
+
+  <a href="promise.html" class="next-btn">
+    <div class="next-btn-inner">
+      <span>Next — The Promise</span>
+      <span>→</span>
+    </div>
+  </a>
+</div>
+
+<script>
+  const cursor = document.getElementById('cursor');
+  document.addEventListener('mousemove', e => { cursor.style.left=e.clientX+'px'; cursor.style.top=e.clientY+'px'; });
+
+  // Petals
+  const pCanvas = document.getElementById('petalCanvas');
+  const pCtx = pCanvas.getContext('2d');
+  const rp = () => { pCanvas.width=window.innerWidth; pCanvas.height=window.innerHeight; };
+  rp(); window.addEventListener('resize',rp);
+  const pts = Array.from({length:18},()=>({x:Math.random()*pCanvas.width,y:Math.random()*pCanvas.height,size:Math.random()*6+3,speed:Math.random()*0.7+0.3,drift:(Math.random()-.5)*.4,rot:Math.random()*Math.PI*2,rotSpeed:(Math.random()-.5)*.025,color:['#f4a0b0','#f7c5cc','#fce4ec'][Math.floor(Math.random()*3)],opacity:Math.random()*.2+.08}));
+  (function pl(){pCtx.clearRect(0,0,pCanvas.width,pCanvas.height);pts.forEach(p=>{p.y+=p.speed;p.x+=p.drift;p.rot+=p.rotSpeed;if(p.y>pCanvas.height+10){p.y=-10;p.x=Math.random()*pCanvas.width;}pCtx.save();pCtx.translate(p.x,p.y);pCtx.rotate(p.rot);pCtx.globalAlpha=p.opacity;pCtx.fillStyle=p.color;pCtx.beginPath();pCtx.ellipse(0,0,p.size,p.size*.5,0,0,Math.PI*2);pCtx.fill();pCtx.restore();});requestAnimationFrame(pl);})();
+
+  // Scroll reveal
+  const cards = document.querySelectorAll('.wish-card');
+  const obs = new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:.1});
+  cards.forEach(c=>obs.observe(c));
+
+  // Confetti
+  const cCanvas = document.getElementById('confettiCanvas');
+  const cCtx = cCanvas.getContext('2d');
+  cCanvas.width = window.innerWidth; cCanvas.height = window.innerHeight;
+  window.addEventListener('resize',()=>{cCanvas.width=window.innerWidth;cCanvas.height=window.innerHeight;});
+
+  let confettis = [];
+  let confettiActive = false;
+
+  function launchConfetti() {
+    const colors = ['#f4a0b0','#f7c5cc','#d4a853','#8faf8a','#c0405a','#fce4ec','#b5d5f5'];
+    for (let i=0;i<180;i++) {
+      confettis.push({
+        x: cCanvas.width/2 + (Math.random()-0.5)*200,
+        y: cCanvas.height*0.6,
+        vx: (Math.random()-0.5)*12,
+        vy: Math.random()*-16 - 4,
+        size: Math.random()*8+3,
+        color: colors[Math.floor(Math.random()*colors.length)],
+        rot: Math.random()*Math.PI*2,
+        rotSpeed: (Math.random()-0.5)*0.15,
+        shape: Math.random()>0.5?'rect':'circle',
+        alpha: 1, gravity: 0.35
+      });
+    }
+    if (!confettiActive) { confettiActive=true; animateConfetti(); }
+  }
+
+  function animateConfetti() {
+    cCtx.clearRect(0,0,cCanvas.width,cCanvas.height);
+    confettis = confettis.filter(c=>c.alpha>0.01);
+    confettis.forEach(c=>{
+      c.x+=c.vx; c.y+=c.vy; c.vy+=c.gravity;
+      c.vx*=0.99; c.rot+=c.rotSpeed;
+      if(c.y>cCanvas.height) c.alpha-=0.05;
+      cCtx.save(); cCtx.globalAlpha=c.alpha; cCtx.fillStyle=c.color;
+      cCtx.translate(c.x,c.y); cCtx.rotate(c.rot);
+      if(c.shape==='rect'){cCtx.fillRect(-c.size/2,-c.size/4,c.size,c.size/2);}
+      else{cCtx.beginPath();cCtx.arc(0,0,c.size/2,0,Math.PI*2);cCtx.fill();}
+      cCtx.restore();
+    });
+    if(confettis.length>0) requestAnimationFrame(animateConfetti);
+    else confettiActive=false;
+  }
+
+  document.getElementById('confettiBtn').addEventListener('click', launchConfetti);
+</script>
+</body>
+</html>

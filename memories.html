@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Memories with Mimi 🌸</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Klee+One&family=Zen+Kaku+Gothic+New:wght@300;400&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blush: #f7c5cc;
+      --sakura: #f4a0b0;
+      --deep-rose: #c0405a;
+      --cream: #fdf6f0;
+      --ink: #1a0a0f;
+      --ink-light: rgba(26,10,15,0.55);
+      --sage: #8faf8a;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--cream);
+      font-family: 'Zen Kaku Gothic New', sans-serif;
+      min-height: 100vh; cursor: none;
+    }
+    .cursor {
+      position:fixed; width:10px; height:10px;
+      background:var(--sakura); border-radius:50%;
+      pointer-events:none; z-index:9999;
+      transform:translate(-50%,-50%); mix-blend-mode:multiply;
+    }
+    #petalCanvas {
+      position:fixed; top:0; left:0;
+      width:100%; height:100%;
+      pointer-events:none; z-index:0;
+    }
+
+    nav {
+      position:fixed; top:0; left:0; right:0;
+      padding:1.2rem 2rem;
+      display:flex; align-items:center; justify-content:space-between;
+      z-index:50;
+      background: linear-gradient(to bottom, rgba(253,246,240,0.95), transparent);
+      backdrop-filter: blur(4px);
+    }
+    .nav-back { font-size:0.8rem; letter-spacing:0.25em; color:var(--ink-light); text-decoration:none; text-transform:uppercase; transition:color 0.2s; }
+    .nav-back:hover { color:var(--deep-rose); }
+    .nav-title { font-family:'Playfair Display',serif; font-style:italic; font-size:1rem; color:var(--ink-light); }
+    .nav-pages { display:flex; gap:1rem; }
+    .nav-pages a { font-size:0.7rem; letter-spacing:0.2em; color:var(--ink-light); text-decoration:none; text-transform:uppercase; transition:color 0.2s; }
+    .nav-pages a:hover { color:var(--deep-rose); }
+
+    .page-wrapper {
+      position:relative; z-index:1;
+      max-width:900px; margin:0 auto;
+      padding:7rem 2rem 5rem;
+    }
+
+    .page-header {
+      text-align:center; margin-bottom:4rem;
+      opacity:0; animation:fadeUp 1s ease 0.2s forwards;
+    }
+    .page-tag { font-size:0.7rem; letter-spacing:0.4em; color:var(--sakura); text-transform:uppercase; margin-bottom:0.8rem; }
+    .page-heading { font-family:'Playfair Display',serif; font-size:clamp(2rem,5vw,3.5rem); color:var(--ink); line-height:1.1; }
+    .page-heading em { color:var(--deep-rose); font-style:italic; }
+    .page-subtitle { margin-top:1rem; font-size:0.9rem; color:var(--ink-light); font-weight:300; letter-spacing:0.1em; }
+
+    /* Timeline */
+    .timeline {
+      position:relative;
+      padding-left: 2px;
+    }
+    .timeline::before {
+      content:'';
+      position:absolute;
+      left:50%;
+      top:0; bottom:0;
+      width:1px;
+      background: linear-gradient(to bottom, transparent, var(--blush) 10%, var(--blush) 90%, transparent);
+      transform: translateX(-50%);
+    }
+
+    .memory-item {
+      display:grid;
+      grid-template-columns: 1fr 60px 1fr;
+      gap:0; align-items:start;
+      margin-bottom: 4rem;
+      opacity:0;
+      transform:translateY(24px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .memory-item.visible { opacity:1; transform:translateY(0); }
+
+    /* right-side items: card is in col 3, dot col 2, spacer col 1 */
+    .memory-item.right { grid-template-areas: "spacer dot card"; }
+    .memory-item.right .memory-spacer { grid-area: spacer; }
+    .memory-item.right .memory-dot    { grid-area: dot; }
+    .memory-item.right .memory-card   { grid-area: card; }
+
+    /* left-side items: card col 1, dot col 2, spacer col 3 */
+    .memory-item.left { grid-template-areas: "card dot spacer"; }
+    .memory-item.left .memory-card    { grid-area: card; }
+    .memory-item.left .memory-dot     { grid-area: dot; }
+    .memory-item.left .memory-spacer  { grid-area: spacer; }
+
+    .memory-card {
+      background:white;
+      border-radius:2px;
+      padding:2rem;
+      box-shadow: 0 2px 20px rgba(192,64,90,0.06), 0 0 0 1px rgba(244,160,176,0.12);
+      position:relative;
+    }
+    .memory-card::before {
+      content:'';
+      position:absolute;
+      top:0; left:0;
+      width:3px; height:100%;
+      background: linear-gradient(to bottom, var(--sakura), var(--blush));
+      border-radius:2px 0 0 2px;
+    }
+    .memory-item.right .memory-card::before {
+      left:auto; right:0;
+      border-radius: 0 2px 2px 0;
+    }
+
+    .memory-emoji {
+      font-size:1.6rem; margin-bottom:0.8rem; display:block;
+    }
+    .memory-title {
+      font-family:'Playfair Display',serif;
+      font-size:1.2rem; color:var(--ink);
+      margin-bottom:0.5rem;
+    }
+    .memory-text {
+      font-family:'Lora',serif;
+      font-size:0.9rem; line-height:1.75;
+      color:var(--ink-light);
+    }
+    .memory-tag {
+      display:inline-block;
+      margin-top:1rem;
+      font-size:0.65rem; letter-spacing:0.2em;
+      text-transform:uppercase;
+      color:var(--sakura);
+      border:1px solid rgba(244,160,176,0.4);
+      padding:0.2rem 0.7rem; border-radius:50px;
+    }
+
+    /* Center dot */
+    .memory-dot {
+      display:flex; align-items:flex-start;
+      justify-content:center;
+      padding-top:1.5rem;
+    }
+    .dot-inner {
+      width:14px; height:14px;
+      border-radius:50%;
+      background:white;
+      border:2px solid var(--sakura);
+      box-shadow:0 0 0 3px rgba(244,160,176,0.2);
+      flex-shrink:0;
+    }
+
+    /* Empty spacer for alternating */
+    .memory-spacer { }
+
+    /* Photo placeholder / decorative box */
+    .memory-photo {
+      background: linear-gradient(135deg, rgba(244,160,176,0.1), rgba(247,197,204,0.2));
+      border: 1px dashed rgba(244,160,176,0.3);
+      border-radius:2px;
+      height:180px;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      gap:0.5rem;
+    }
+    .photo-icon { font-size:2rem; opacity:0.4; }
+    .photo-label { font-size:0.7rem; letter-spacing:0.2em; color:var(--ink-light); opacity:0.5; text-transform:uppercase; }
+
+    /* Final message */
+    .final-message {
+      text-align:center;
+      padding:3rem 2rem;
+      opacity:0;
+      transform:translateY(20px);
+      transition: opacity 0.9s ease, transform 0.9s ease;
+    }
+    .final-message.visible {
+      opacity:1;
+      transform:translateY(0);
+    }
+    .final-message p {
+      font-family:'Playfair Display',serif;
+      font-style:italic;
+      font-size:clamp(1.2rem,3vw,1.8rem);
+      color:var(--ink);
+      line-height:1.5;
+    }
+    .final-message span { color:var(--deep-rose); }
+    .final-kanji {
+      margin-top:1rem;
+      font-family:'Klee One',cursive;
+      font-size:0.85rem; color:var(--sakura);
+      letter-spacing:0.3em;
+    }
+
+    .next-btn { display:block; text-align:center; margin-top:3rem; text-decoration:none; }
+    .next-btn-inner {
+      display:inline-flex; align-items:center; gap:0.7rem;
+      padding:0.8rem 2rem; border:1px solid rgba(192,64,90,0.3);
+      border-radius:50px; font-size:0.8rem; letter-spacing:0.2em;
+      color:var(--ink-light); text-transform:uppercase; transition:all 0.3s;
+    }
+    .next-btn:hover .next-btn-inner {
+      background:var(--sakura); color:white; border-color:var(--sakura);
+      transform:translateY(-2px); box-shadow:0 8px 24px rgba(244,160,176,0.3);
+    }
+
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(20px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+
+    @media(max-width:640px) {
+      .timeline::before { left:20px; }
+      .memory-item,
+      .memory-item.left,
+      .memory-item.right {
+        grid-template-columns: 40px 1fr;
+        grid-template-areas: "dot card";
+      }
+      .memory-spacer { display:none; }
+      .memory-item.left .memory-dot,
+      .memory-item.right .memory-dot { grid-area: dot; padding-top:1.5rem; }
+      .memory-item.left .memory-card,
+      .memory-item.right .memory-card { grid-area: card; }
+      .memory-item.right .memory-card::before { left:0; right:auto; border-radius:2px 0 0 2px; }
+      nav .nav-pages { display:none; }
+    }
+  </style>
+</head>
+<body>
+<div class="cursor" id="cursor"></div>
+<canvas id="petalCanvas"></canvas>
+
+<nav>
+  <a href="index.html" class="nav-back">← Home</a>
+  <span class="nav-title">Memories</span>
+  <div class="nav-pages">
+    <a href="letter.html">Letter</a>
+    <a href="wishes.html">Wishes</a>
+    <a href="promise.html">Promise</a>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <header class="page-header">
+    <p class="page-tag">A little scrapbook</p>
+    <h1 class="page-heading">Moments worth <em>remembering</em></h1>
+    <p class="page-subtitle">Things that made our friendship what it is</p>
+  </header>
+
+  <div class="timeline">
+
+    <!-- Memory 1 -->
+    <div class="memory-item left">
+      <div class="memory-card">
+        <span class="memory-emoji">💬</span>
+        <h3 class="memory-title">The First Conversations</h3>
+        <p class="memory-text">
+          Back when we started talking on HelloTalk — figuring out each other's humor, swapping
+          facts about our cities, and slowly realizing we actually had a lot in common
+          despite being half a world apart.
+        </p>
+        <span class="memory-tag">HelloTalk</span>
+      </div>
+      <div class="memory-dot"><div class="dot-inner"></div></div>
+      <div class="memory-spacer"></div>
+    </div>
+
+    <!-- Memory 2 -->
+    <div class="memory-item right">
+      <div class="memory-spacer"></div>
+      <div class="memory-dot"><div class="dot-inner"></div></div>
+      <div class="memory-card">
+        <span class="memory-emoji">🗾</span>
+        <h3 class="memory-title">The Japan Plan</h3>
+        <p class="memory-text">
+          That moment we both realized we wanted to explore Japan — and somehow
+          promised each other we'd explore together. Kyoto in spring, sakura season,
+          ramen at a tiny place we'd find by accident. The plan exists now.
+        </p>
+        <span class="memory-tag">Future Memory</span>
+      </div>
+    </div>
+
+    <!-- Memory 3 -->
+    <div class="memory-item left">
+      <div class="memory-card">
+        <span class="memory-emoji">🍜</span>
+        <h3 class="memory-title">Food Debates</h3>
+        <p class="memory-text">
+          Arguing (lovingly) about the best kinds of food. You with your Japanese and
+          Chinese tastes, me with my North Indian stubbornness. Agreeing that ramen
+          is objectively good and that we'd test this theory in person someday.
+        </p>
+        <span class="memory-tag">Important Research</span>
+      </div>
+      <div class="memory-dot"><div class="dot-inner"></div></div>
+      <div class="memory-spacer"></div>
+    </div>
+
+    <!-- Memory 4 -->
+    <div class="memory-item right">
+      <div class="memory-spacer"></div>
+      <div class="memory-dot"><div class="dot-inner"></div></div>
+      <div class="memory-card">
+        <span class="memory-emoji">🌸</span>
+        <h3 class="memory-title">White Day</h3>
+        <p class="memory-text">
+          When I built you that whole little website for White Day — sakura animations,
+          a promise page, the whole thing. You are the only person I've ever made
+          a webpage for. That still feels kind of special.
+        </p>
+        <span class="memory-tag">March 14</span>
+      </div>
+    </div>
+
+    <!-- Memory 5 -->
+    <div class="memory-item left">
+      <div class="memory-card">
+        <span class="memory-emoji">🌙</span>
+        <h3 class="memory-title">Late Night Talks</h3>
+        <p class="memory-text">
+          The long conversations about life, language, dreams, and what
+          we want the future to look like. You're one of the rare people
+          I can talk to about anything, and it never feels strange.
+        </p>
+        <span class="memory-tag">Always Ongoing</span>
+      </div>
+      <div class="memory-dot"><div class="dot-inner"></div></div>
+      <div class="memory-spacer"></div>
+    </div>
+
+    <!-- Memory 6 -->
+    <div class="memory-item right">
+      <div class="memory-spacer"></div>
+      <div class="memory-dot"><div class="dot-inner"></div></div>
+      <div class="memory-card">
+        <span class="memory-emoji">🎂</span>
+        <h3 class="memory-title">Today</h3>
+        <p class="memory-text">
+          Your birthday. March 25. A day I now have saved somewhere important.
+          A day I want to celebrate with you properly — first with this page,
+          and someday, with something much better.
+        </p>
+        <span class="memory-tag">March 25, 2025</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="final-message">
+    <p>Every one of these moments is a reason I'm<br><span>glad you exist, Mimi.</span></p>
+    <p class="final-kanji">ありがとう · Thank you</p>
+  </div>
+
+  <a href="wishes.html" class="next-btn">
+    <div class="next-btn-inner">
+      <span>Next — Birthday Wishes</span>
+      <span>→</span>
+    </div>
+  </a>
+</div>
+
+<script>
+  const cursor = document.getElementById('cursor');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+  });
+
+  // Petals
+  const canvas = document.getElementById('petalCanvas');
+  const ctx = canvas.getContext('2d');
+  const resize = () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    // Clamp existing petal positions so they stay within new bounds
+    petals.forEach(p => {
+      if (p.x > canvas.width)  p.x = Math.random() * canvas.width;
+      if (p.y > canvas.height) p.y = Math.random() * canvas.height;
+    });
+  };
+  const petals = Array.from({length:18}, () => ({
+    x: Math.random()*window.innerWidth, y: Math.random()*window.innerHeight,
+    size: Math.random()*6+3, speed: Math.random()*0.7+0.3,
+    drift: (Math.random()-0.5)*0.4, rot: Math.random()*Math.PI*2,
+    rotSpeed: (Math.random()-0.5)*0.025,
+    color: ['#f4a0b0','#f7c5cc','#fce4ec'][Math.floor(Math.random()*3)],
+    opacity: Math.random()*0.2+0.08
+  }));
+  resize();
+  window.addEventListener('resize', resize);
+  (function loop() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    petals.forEach(p => {
+      p.y+=p.speed; p.x+=p.drift; p.rot+=p.rotSpeed;
+      if(p.y>canvas.height+10){p.y=-10; p.x=Math.random()*canvas.width;}
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+      ctx.globalAlpha=p.opacity; ctx.fillStyle=p.color;
+      ctx.beginPath(); ctx.ellipse(0,0,p.size,p.size*0.5,0,0,Math.PI*2);
+      ctx.fill(); ctx.restore();
+    });
+    requestAnimationFrame(loop);
+  })();
+
+  // Scroll reveal — memory items + final message
+  const items = document.querySelectorAll('.memory-item');
+  const finalMsg = document.querySelector('.final-message');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.15 });
+  items.forEach(i => observer.observe(i));
+  if (finalMsg) observer.observe(finalMsg);
+</script>
+</body>
+</html>
